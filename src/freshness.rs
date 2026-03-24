@@ -245,4 +245,20 @@ mod tests {
         assert!(report.deleted.is_empty());
         assert!(report.added.is_empty());
     }
+
+    #[test]
+    fn detects_same_size_modification() {
+        // Regression test: a file modified with same-size content must be
+        // detected via nanosecond mtime even if the byte count is unchanged.
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("a.txt"), "content_aaa").unwrap();
+        build_and_write_with_meta(dir.path());
+
+        // Overwrite with same-length content (11 bytes each)
+        fs::write(dir.path().join("a.txt"), "content_bbb").unwrap();
+
+        let report = check_freshness(&dir.path().join(".ngi"), dir.path()).unwrap();
+        assert!(!report.is_fresh, "same-size modification must be detected via nanosecond mtime");
+        assert!(report.changed.contains(&"a.txt".to_string()));
+    }
 }
