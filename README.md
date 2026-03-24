@@ -46,10 +46,16 @@ Correctness: **100% match with ripgrep** across all tested queries (13/13 exact)
 ## Install
 
 ```sh
-cargo install ngi
+# From GitHub
+cargo install --git https://github.com/erogol/ngi
+
+# From source
+git clone https://github.com/erogol/ngi && cd ngi
+cargo build --release
+cp target/release/ngi /usr/local/bin/
 ```
 
-Requires [ripgrep](https://github.com/BurntSushi/rg) on `$PATH` for best performance. Falls back to a built-in Rust regex matcher if rg isn't available.
+Requires [Rust toolchain](https://rustup.rs/). Optional: [ripgrep](https://github.com/BurntSushi/rg) on `$PATH` for best performance (falls back to built-in Rust regex if unavailable).
 
 ## Usage
 
