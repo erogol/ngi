@@ -25,7 +25,10 @@ pub struct FreshnessReport {
     pub total_indexed: usize,
 }
 
-/// Get mtime (seconds since epoch) and size for a file, or None if stat fails.
+/// Get mtime (nanoseconds since epoch) and size for a file, or None if stat fails.
+///
+/// Using nanosecond precision avoids missed updates when a file is modified
+/// within the same second as the last index build (same size, same second).
 fn file_mtime_size(path: &Path) -> Option<(u64, u64)> {
     let meta = path.metadata().ok()?;
     let mtime = meta
@@ -33,7 +36,7 @@ fn file_mtime_size(path: &Path) -> Option<(u64, u64)> {
         .ok()?
         .duration_since(UNIX_EPOCH)
         .ok()?
-        .as_secs();
+        .as_nanos() as u64;
     Some((mtime, meta.len()))
 }
 
