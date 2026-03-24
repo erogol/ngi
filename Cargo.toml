@@ -1,0 +1,23 @@
+[package]
+name = "ngi"
+version = "0.1.0"
+edition = "2024"
+description = "Fast regex search over codebases using trigram indexes — 2-6x faster than ripgrep on selective queries"
+license = "MIT"
+repository = "https://github.com/erogol/ngi"
+readme = "README.md"
+keywords = ["search", "grep", "regex", "trigram", "code-search"]
+categories = ["command-line-utilities", "text-processing"]
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+crc32fast = "1.4"
+ignore = "0.4"
+memmap2 = "0.9"
+rayon = "1.10"
+regex = "1"
+regex-syntax = "0.8"
+
+[dev-dependencies]
+tempfile = "3"
