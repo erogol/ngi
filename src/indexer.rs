@@ -90,6 +90,11 @@ pub fn build_index(root: &Path, max_file_size: u64) -> Result<InMemoryIndex> {
         file_paths.push((entry.into_path(), size));
     }
 
+    // Sort for deterministic file ID assignment across runs.
+    // Without this, readdir order can vary and file IDs shift, causing
+    // the index to return wrong candidates on search.
+    file_paths.sort_by(|a, b| a.0.cmp(&b.0));
+
     // Phase 2: Process files in parallel (read + trigram extraction)
     let root_owned = root.to_path_buf();
     let results: Vec<FileResult> = file_paths
@@ -595,6 +600,29 @@ mod tests {
 
         // Same n-gram count
         assert_eq!(incr.postings.len(), full.postings.len());
+    }
+
+    #[test]
+    fn file_ids_are_deterministic_across_rebuilds() {
+        // Two full builds of the same directory must produce identical
+        // file ordering (and thus identical file IDs). This prevents
+        // the index from returning wrong candidates after a rebuild.
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("zebra.py"), "def zebra(): pass").unwrap();
+        fs::write(dir.path().join("alpha.py"), "def alpha(): pass").unwrap();
+        fs::write(dir.path().join("middle.py"), "def middle(): pass").unwrap();
+        fs::create_dir_all(dir.path().join("sub")).unwrap();
+        fs::write(dir.path().join("sub/beta.py"), "def beta(): pass").unwrap();
+
+        let index1 = build_index(dir.path(), DEFAULT_MAX_FILE_SIZE).unwrap();
+        let index2 = build_index(dir.path(), DEFAULT_MAX_FILE_SIZE).unwrap();
+
+        assert_eq!(index1.files, index2.files, "file ordering must be identical across builds");
+
+        // Verify files are sorted (not in walk order)
+        let mut sorted = index1.files.clone();
+        sorted.sort();
+        assert_eq!(index1.files, sorted, "files must be in sorted order");
     }
 
 }
